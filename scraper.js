@@ -32,7 +32,6 @@ const pdfPromises = downloadedFiles.map(filePath => {
     text.forEach(line => {
       if (headerRegex.test(line)) {
         worksheet.addRow({ one: line })
-        console.log(line)
       }
     })
   })

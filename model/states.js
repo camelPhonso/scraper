@@ -6,12 +6,11 @@ const insert_states = db.prepare(/*sql*/ `
 `)
 
 const updateStates = object => {
-  console.dir(object)
   return insert_states.run(object)
 }
 
 const select_states = db.prepare(/*sql*/ `
-  SELECT * FROM states
+  SELECT * FROM states WHERE id = 1
 `)
 
 const getStates = () => {

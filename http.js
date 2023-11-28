@@ -35,21 +35,33 @@ function staggeredFetching(givenState) {
     .catch(err => console.error(err))
 }
 
+
 const newStates = async () => {
   try {
-    const newStatePromises = states
-      .filter(state => state.stateId === 135 || state.stateId === 128) // only for testing
-      .map(async state => {
-        try {
-          return await staggeredFetching(state)
-        } catch (error) {
-          console.error(`Error fetching a State : ${error}`)
-          throw error
-        }
-      })
-    const newStates = await Promise.all(newStatePromises)
-    const newStatesJSON = JSON.stringify(newStates)
-    updateStates(newStatesJSON)
+    const newStates = []
+
+    const processState = async index => {
+      if (index >= states.length) {
+        const newStatesJSON = JSON.stringify(newStates)
+        updateStates(newStatesJSON)
+        return
+      }
+      const state = states[index]
+
+      try {
+        const result = await staggeredFetching(state)
+        newStates.push(result)
+
+        setTimeout(async () => {
+          await processState(index + 1)
+        }, requestVelocity)
+      } catch (error) {
+        console.error(`Error fetching a state: ${error}`)
+        throw error
+      }
+    }
+
+    await processState(0)
   } catch (error) {
     console.error(`Error processing states: ${error}`)
   }
