@@ -2,7 +2,7 @@ require("dotenv").config()
 
 const requestCookie = process.env.COOKIE
 const baseURL = process.env.BASE_URL
-const {getStates, updateStates} = require('../scraper/model/states.js')
+const { getStates, updateStates } = require("../scraper/model/states.js")
 
 const statesJSON = getStates(2)
 const states = JSON.parse(statesJSON.states_file)
@@ -48,9 +48,9 @@ const staggeredSchoolFetch = async (stateId, givenBlock) => {
 
     console.log(
       "\u001b[32m",
-      `Fetched ${jsonResponse.length} schools from ${updatedBlock.eduBlockName}`
+      `Fetched ${schoolList.length} schools from ${updatedBlock.eduBlockName}`
     )
-    console.dir(updatedBlock)
+
     return updatedBlock
   } catch (error) {
     console.error(
@@ -59,7 +59,48 @@ const staggeredSchoolFetch = async (stateId, givenBlock) => {
   }
 }
 
+// drill the stateId from a district to it's blocks and call staggeredSchoolFetch
+const processBlocks = async currentDistrict => {
+  try {
+    const newBlocks = []
+    const stateId = currentDistrict.stateId
+
+    const processSingleBlock = async index => {
+      if (index >= currentDistrict.blocks?.length) {
+        const updatedDistrict = {
+          ...currentDistrict,
+          blocks: newBlocks,
+        }
+        return updatedDistrict
+      }
+      const block = currentDistrict.blocks[index]
+
+      try {
+        const processedBlock = await staggeredSchoolFetch(stateId, block)
+        newBlocks.push(processedBlock)
+
+        const result = await new Promise(resolve => {
+          setTimeout(async () => {
+            const result = await processSingleBlock(index + 1)
+            resolve(result)
+          }, requestVelocity)
+        })
+        return result
+      } catch (error) {
+        console.error(`Error processing a block: ${error}`)
+        throw error
+      }
+    }
+    return processSingleBlock(0)
+  } catch (error) {
+    console.error(`Error processing a district: ${error}`)
+    throw error
+  }
+}
+
 const testState = states.filter(state => state.stateId === 135)
+const testDistrict = testState[0].districts[0]
 const testBlock = testState[0].districts[0]?.blocks[0]
 
-staggeredSchoolFetch(testState.stateId, testBlock)
+// staggeredSchoolFetch(testState.stateId, testBlock)
+// processBlocks(testDistrict)
