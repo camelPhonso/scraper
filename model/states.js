@@ -10,11 +10,11 @@ const updateStates = object => {
 }
 
 const select_states = db.prepare(/*sql*/ `
-  SELECT * FROM states WHERE id = 1
+  SELECT * FROM states WHERE id = ?
 `)
 
-const getStates = () => {
-  return select_states.all()
+const getStates = number => {
+  return select_states.get(number)
 }
 
 module.exports = { updateStates, getStates }
